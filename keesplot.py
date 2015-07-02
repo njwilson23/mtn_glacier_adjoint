@@ -1,10 +1,6 @@
 #! /usr/bin/env python
-import os
 import sys
 import matplotlib.pyplot as plt
-
-# os.system("gfortran kees_model.f90 -o kees_model")
-# os.system("./kees_model")
 
 def plot_data(d):
     x = d[:50]
