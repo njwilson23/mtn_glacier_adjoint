@@ -3,26 +3,26 @@
 !
 program kees_forward
 
-    use numeric_kinds
     implicit none
 
-    real(real64),parameter      :: g = 9.8, A = 1e-16, rho = 920.0
-    integer(int32),parameter    :: n = 3
-    real(real64),parameter      :: C = (2*A / (n+2)) * (rho*g)**n
-    integer(int32)              :: ii
-    real(real64)                :: volume
+    integer,parameter       :: f64 = kind(8), i32 = kind(4)
+    real(f64),parameter     :: g = 9.8, A = 1e-16, rho = 920.0
+    integer(i32),parameter  :: n = 3
+    real(f64),parameter     :: C = (2*A / (n+2)) * (rho*g)**n
+    integer(i32)            :: ii
+    real(f64)               :: volume
 
     ! Run workshop example
-    integer(int32), parameter   :: len = 50
-    real(real64)                :: dx = 1000.0, dt = 0.05, &
-                                   time = 0.0, end_time = 1000.0
+    integer(i32), parameter :: len = 50
+    real(f64)               :: dx = 1000.0, dt = 0.05, &
+                               time = 0.0, end_time = 1000.0
 
-    real(real64), dimension(len):: mb
+    real(f64), dimension(len)       :: mb
 
     type KeesModel
-        real(real64),dimension(len) :: x    ! horizontal coordinate
-        real(real64),dimension(len) :: b    ! base elevation
-        real(real64),dimension(len) :: s    ! surface elevation
+        real(f64),dimension(len)    :: x    ! horizontal coordinate
+        real(f64),dimension(len)    :: b    ! base elevation
+        real(f64),dimension(len)    :: s    ! surface elevation
     end type KeesModel
 
     type(KeesModel)                 :: model
@@ -57,9 +57,9 @@ program kees_forward
     subroutine diffusivity(km, n, nu)
         implicit none
         type(KeesModel), intent(in)     :: km
-        integer(int32), intent(in)      :: n
-        real(real64), dimension(size(km%x)-1), intent(inout)   :: nu
-        integer(int32)                  :: ii
+        integer(i32), intent(in)        :: n
+        real(f64), dimension(size(km%x)-1), intent(inout)   :: nu
+        integer(i32)                    :: ii
 
         do ii = 1, len-1
             nu(ii) = C &
@@ -69,11 +69,11 @@ program kees_forward
     end subroutine
 
     ! Return the glacier volume (trapezoid rule)
-    real(real64) function glacier_volume(model) result(sigma)
+    real(f64) function glacier_volume(model) result(sigma)
 
         implicit none
         type(KeesModel), intent(in)     :: model
-        integer(int32)                  :: ii
+        integer(i32)                    :: ii
 
         do ii = 1, size(model%x)-1
             sigma = sigma + (model%x(ii+1) - model%x(ii)) * 0.5 &
@@ -88,13 +88,13 @@ program kees_forward
         implicit none
 
         type(KeesModel), intent(inout)          :: model
-        real(real64), intent(in)                :: dt
-        real(real64), dimension(:), intent(in)  :: mb
+        real(f64), intent(in)                   :: dt
+        real(f64), dimension(:), intent(in)     :: mb
 
-        integer(int32)                          :: len, ii
-        real(real64), dimension(:), allocatable :: nu
-        real(real64), dimension(:), allocatable :: flux
-        real(real64), dimension(:), allocatable :: dHdt
+        integer(i32)                            :: len, ii
+        real(f64), dimension(:), allocatable    :: nu
+        real(f64), dimension(:), allocatable    :: flux
+        real(f64), dimension(:), allocatable    :: dHdt
 
         len = size(model%s)
         allocate(nu(len-1), flux(len-1), dHdt(len))
@@ -121,7 +121,7 @@ program kees_forward
 
         character(len=8), intent(in)    :: filename
         type(KeesModel), intent(in)     :: model
-        integer(int32)                  :: ios
+        integer(i32)                    :: ios
 
         open(unit=20, file=filename, form="formatted", status="old", iostat=ios)
         if (ios /= 0) then
