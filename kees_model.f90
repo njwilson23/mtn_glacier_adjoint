@@ -3,8 +3,7 @@
 !
 program kees_forward
 
-    use iso_fortran_env
-
+    use numeric_kinds
     implicit none
 
     real(real64),parameter      :: g = 9.8, A = 1e-16, rho = 920.0
@@ -34,8 +33,9 @@ program kees_forward
         model%s(ii) = model%b(ii)
         mb(ii) = 4.0 - 0.2e-3 * model%x(ii)
     end do
+    !$openad INDEPENDENT(mb)
 
-    call writemodel("init.dat", model)
+    !call writemodel("init.dat", model)
 
     do while (time .lt. end_time)
         call timestep_explicit(model, dt, mb)
@@ -44,8 +44,9 @@ program kees_forward
 
     volume = glacier_volume(model)
     print*, "Glacier volume:",volume/1e6, "km^2"
+    !$openad DEPENDENT(volume)
 
-    call writemodel("finl.dat", model)
+    !call writemodel("finl.dat", model)
 
     ! --------------------------------------------------------------- !
 
