@@ -68,7 +68,7 @@ program kees_forward
     end subroutine
 
     ! Return the glacier volume (trapezoid rule)
-    real(real64) function glacier_volume(model)    result(sigma)
+    real(real64) function glacier_volume(model) result(sigma)
 
         implicit none
         type(KeesModel), intent(in)     :: model
