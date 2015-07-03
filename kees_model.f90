@@ -9,7 +9,7 @@ program kees_forward
     real(f64),parameter     :: g = 9.8, A = 1e-16, rho = 920.0
     integer(i32),parameter  :: n = 3
     real(f64),parameter     :: C = (2*A / (n+2)) * (rho*g)**n
-    integer(i32)            :: ii
+    integer(i32)            :: i
     real(f64)               :: volume
 
     ! Run workshop example
@@ -22,11 +22,11 @@ program kees_forward
     real(f64),dimension(len)    :: b    ! base elevation
     real(f64),dimension(len)    :: s    ! surface elevation
 
-    do ii = 1,len
-        x(ii) = (ii-1)*dx
-        b(ii) = -2.5e-2 * x(ii)
-        s(ii) = b(ii)
-        mb(ii) = 4.0 - 0.2e-3 * x(ii)
+    do i = 1,len
+        x(i) = (i-1)*dx
+        b(i) = -2.5e-2 * x(i)
+        s(i) = b(i)
+        mb(i) = 4.0 - 0.2e-3 * x(i)
     end do
     !$openad INDEPENDENT(mb)
 
@@ -54,11 +54,11 @@ program kees_forward
         real(f64), dimension(:), intent(in) :: x, b, s
         integer(i32), intent(in)        :: n
         real(f64), dimension(size(x)-1), intent(inout)   :: nu
-        integer(i32)                    :: ii
+        integer(i32)                    :: i
 
-        do ii = 1, size(nu)
-            nu(ii) = C * (0.5*(s(ii+1)+s(ii)-b(ii+1)-b(ii)))**(n+2) &
-                       * abs((s(ii+1)-s(ii)) / (x(ii+1)-x(ii)))**(n-1)
+        do i = 1, size(nu)
+            nu(i) = C * (0.5*(s(i+1)+s(i)-b(i+1)-b(i)))**(n+2) &
+                       * abs((s(i+1)-s(i)) / (x(i+1)-x(i)))**(n-1)
         end do
     end subroutine
 
@@ -67,11 +67,11 @@ program kees_forward
 
         implicit none
         real(f64), dimension(:), intent(in) :: x, b, s
-        integer(i32)                        :: ii
+        integer(i32)                        :: i
 
-        do ii = 1, size(x)-1
+        do i = 1, size(x)-1
             sigma = sigma + &
-                (x(ii+1) - x(ii)) * 0.5 * (s(ii+1) +s(ii) - b(ii+1) - b(ii))
+                (x(i+1) - x(i)) * 0.5 * (s(i+1) +s(i) - b(i+1) - b(i))
         end do
     end function
 
@@ -85,7 +85,7 @@ program kees_forward
         real(f64), dimension(:), intent(inout)  :: s
         real(f64), intent(in)                   :: dt
 
-        integer(i32)                            :: len, ii
+        integer(i32)                            :: len, i
         real(f64), dimension(:), allocatable    :: nu
         real(f64), dimension(:), allocatable    :: flux
         real(f64), dimension(:), allocatable    :: dHdt
@@ -94,15 +94,15 @@ program kees_forward
         allocate(nu(len-1), flux(len-1), dHdt(len))
 
         call diffusivity(x, b, s, 3, nu)
-        do ii = 1, len-1
-            flux(ii) = -nu(ii) * &
-                (s(ii+1) - s(ii)) / (x(ii+1) - x(ii))
+        do i = 1, len-1
+            flux(i) = -nu(i) * &
+                (s(i+1) - s(i)) / (x(i+1) - x(i))
         end do
 
         dHdt(1) = -mb(1)
         dHdt(len) = -mb(len)
-        do ii = 2, len-1
-            dHdt(ii) = -(flux(ii) - flux(ii-1)) / (x(ii) - x(ii-1))
+        do i = 2, len-1
+            dHdt(i) = -(flux(i) - flux(i-1)) / (x(i) - x(i-1))
         end do
 
         s = max(s + dt*(dHdt + mb), b)
