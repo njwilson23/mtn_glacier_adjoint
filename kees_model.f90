@@ -6,21 +6,20 @@ program kees_forward
     implicit none
 
     integer,parameter       :: f64 = kind(8), i32 = kind(4)
-    real(f64),parameter     :: g = 9.8, A = 1e-16, rho = 920.0
-    integer(i32),parameter  :: n = 3
-    real(f64),parameter     :: C = (2*A / (n+2)) * (rho*g)**n
+    real(f64), parameter    :: g = 9.8, A = 1e-16, rho = 920.0
+    integer(i32), parameter :: n = 3
+    real(f64), parameter    :: C = (2*A / (n+2)) * (rho*g)**n
     integer(i32)            :: i
     real(f64)               :: volume
 
     ! Run workshop example
     integer(i32), parameter :: len = 50
-    real(f64)               :: dx = 1000.0, dt = 0.05, &
-                               time = 0.0, end_time = 1000.0
+    real(f64), parameter    :: dx = 1000.0, dt = 0.05, end_time = 1000.0
 
     real(f64), dimension(len)   :: mb
-    real(f64),dimension(len)    :: x    ! horizontal coordinate
-    real(f64),dimension(len)    :: b    ! base elevation
-    real(f64),dimension(len)    :: s    ! surface elevation
+    real(f64), dimension(len)   :: x    ! horizontal coordinate
+    real(f64), dimension(len)   :: b    ! base elevation
+    real(f64), dimension(len)   :: s    ! surface elevation
 
     do i = 1,len
         x(i) = (i-1)*dx
@@ -28,24 +27,42 @@ program kees_forward
         s(i) = b(i)
         mb(i) = 4.0 - 0.2e-3 * x(i)
     end do
-    !$openad INDEPENDENT(mb)
-
     !call writemodel("init.dat", x, b, s)
 
-    do while (time .lt. end_time)
-        call timestep_explicit(x, b, s, dt, mb)
-        time = time + dt
-    end do
+    !$openad INDEPENDENT(mb)
 
-    volume = glacier_volume(x, b, s)
+    volume = forward_model(x, b, s, mb, dt, end_time)
     print*, "Glacier volume:",volume/1e6, "km^2"
+
     !$openad DEPENDENT(volume)
 
     !call writemodel("finl.dat", x, b, s)
 
     ! --------------------------------------------------------------- !
 
-    contains
+contains
+
+    real(f64) function forward_model(x, b, s, mb, dt, end_time) result(volume)
+
+        implicit none
+
+        real(f64), dimension(:), intent(in)     :: mb
+        real(f64), dimension(:), intent(in)     :: x    ! horizontal coordinate
+        real(f64), dimension(:), intent(in)     :: b    ! base elevation
+        real(f64), dimension(:), intent(inout)  :: s    ! surface elevation
+        real(f64), intent(in)   :: dt, end_time
+        real(f64)               :: time
+
+        time = 0.0
+
+        do while (time .lt. end_time)
+            call timestep_explicit(x, b, s, dt, mb)
+            time = time + dt
+        end do
+
+        volume = glacier_volume(x, b, s)
+
+    end function
 
     ! Compute diffusivity for a model instance for a particular glen
     ! exponent
