@@ -17,36 +17,31 @@ program kees_forward
     real(f64)               :: dx = 1000.0, dt = 0.05, &
                                time = 0.0, end_time = 1000.0
 
-    real(f64), dimension(len)       :: mb
-
-    type KeesModel
-        real(f64),dimension(len)    :: x    ! horizontal coordinate
-        real(f64),dimension(len)    :: b    ! base elevation
-        real(f64),dimension(len)    :: s    ! surface elevation
-    end type KeesModel
-
-    type(KeesModel)                 :: model
+    real(f64), dimension(len)   :: mb
+    real(f64),dimension(len)    :: x    ! horizontal coordinate
+    real(f64),dimension(len)    :: b    ! base elevation
+    real(f64),dimension(len)    :: s    ! surface elevation
 
     do ii = 1,len
-        model%x(ii) = (ii-1)*dx
-        model%b(ii) = -2.5e-2 * model%x(ii)
-        model%s(ii) = model%b(ii)
-        mb(ii) = 4.0 - 0.2e-3 * model%x(ii)
+        x(ii) = (ii-1)*dx
+        b(ii) = -2.5e-2 * x(ii)
+        s(ii) = b(ii)
+        mb(ii) = 4.0 - 0.2e-3 * x(ii)
     end do
     !$openad INDEPENDENT(mb)
 
-    !call writemodel("init.dat", model)
+    !call writemodel("init.dat", x, b, s)
 
     do while (time .lt. end_time)
-        call timestep_explicit(model, dt, mb)
+        call timestep_explicit(x, b, s, dt, mb)
         time = time + dt
     end do
 
-    volume = glacier_volume(model)
+    volume = glacier_volume(x, b, s)
     print*, "Glacier volume:",volume/1e6, "km^2"
     !$openad DEPENDENT(volume)
 
-    !call writemodel("finl.dat", model)
+    !call writemodel("finl.dat", x, b, s)
 
     ! --------------------------------------------------------------- !
 
@@ -54,83 +49,82 @@ program kees_forward
 
     ! Compute diffusivity for a model instance for a particular glen
     ! exponent
-    subroutine diffusivity(km, n, nu)
+    subroutine diffusivity(x, b, s, n, nu)
         implicit none
-        type(KeesModel), intent(in)     :: km
+        real(f64), dimension(:), intent(in) :: x, b, s
         integer(i32), intent(in)        :: n
-        real(f64), dimension(size(km%x)-1), intent(inout)   :: nu
+        real(f64), dimension(size(x)-1), intent(inout)   :: nu
         integer(i32)                    :: ii
 
-        do ii = 1, len-1
-            nu(ii) = C &
-                * (0.5*(km%s(ii+1)+km%s(ii)-km%b(ii+1)-km%b(ii)))**(n+2) &
-                * abs((km%s(ii+1)-km%s(ii)) / (km%x(ii+1)-km%x(ii)))**(n-1)
+        do ii = 1, size(nu)
+            nu(ii) = C * (0.5*(s(ii+1)+s(ii)-b(ii+1)-b(ii)))**(n+2) &
+                       * abs((s(ii+1)-s(ii)) / (x(ii+1)-x(ii)))**(n-1)
         end do
     end subroutine
 
     ! Return the glacier volume (trapezoid rule)
-    real(f64) function glacier_volume(model) result(sigma)
+    real(f64) function glacier_volume(x, b, s) result(sigma)
 
         implicit none
-        type(KeesModel), intent(in)     :: model
-        integer(i32)                    :: ii
+        real(f64), dimension(:), intent(in) :: x, b, s
+        integer(i32)                        :: ii
 
-        do ii = 1, size(model%x)-1
-            sigma = sigma + (model%x(ii+1) - model%x(ii)) * 0.5 &
-                * (model%s(ii+1) +model%s(ii) - model%b(ii+1) - model%b(ii))
+        do ii = 1, size(x)-1
+            sigma = sigma + &
+                (x(ii+1) - x(ii)) * 0.5 * (s(ii+1) +s(ii) - b(ii+1) - b(ii))
         end do
     end function
 
     ! Perform an explicit finite difference forward step for a model
     ! instance and return a new model instance
-    subroutine timestep_explicit(model, dt, mb)
+    subroutine timestep_explicit(x, b, s, dt, mb)
 
         implicit none
 
-        type(KeesModel), intent(inout)          :: model
+        real(f64), dimension(:), intent(in)     :: x, b, mb
+        real(f64), dimension(:), intent(inout)  :: s
         real(f64), intent(in)                   :: dt
-        real(f64), dimension(:), intent(in)     :: mb
 
         integer(i32)                            :: len, ii
         real(f64), dimension(:), allocatable    :: nu
         real(f64), dimension(:), allocatable    :: flux
         real(f64), dimension(:), allocatable    :: dHdt
 
-        len = size(model%s)
+        len = size(s)
         allocate(nu(len-1), flux(len-1), dHdt(len))
 
-        call diffusivity(model, 3, nu)
+        call diffusivity(x, b, s, 3, nu)
         do ii = 1, len-1
             flux(ii) = -nu(ii) * &
-                (model%s(ii+1) - model%s(ii)) / (model%x(ii+1) - model%x(ii))
+                (s(ii+1) - s(ii)) / (x(ii+1) - x(ii))
         end do
 
         dHdt(1) = -mb(1)
         dHdt(len) = -mb(len)
         do ii = 2, len-1
-            dHdt(ii) = -(flux(ii) - flux(ii-1)) / (model%x(ii) - model%x(ii-1))
+            dHdt(ii) = -(flux(ii) - flux(ii-1)) / (x(ii) - x(ii-1))
         end do
 
-        model%s = max(model%s + dt*(dHdt + mb), model%b)
+        s = max(s + dt*(dHdt + mb), b)
 
         deallocate(nu, flux, dHdt)
 
     end subroutine
 
-    subroutine writemodel(filename, model)
+    subroutine writemodel(filename, x, b, s)
 
         character(len=8), intent(in)    :: filename
-        type(KeesModel), intent(in)     :: model
-        integer(i32)                    :: ios
+        real(f64), dimension(:), intent(in) :: x, b, s
+        integer(i32)    :: ios
 
         open(unit=20, file=filename, form="formatted", status="old", iostat=ios)
         if (ios /= 0) then
             print*, "Error writing file"
             stop
         end if
-        write(20,*) model%x
-        write(20,*) model%b
-        write(20,*) model%s
+        write(20,*) x
+        write(20,*) b
+        write(20,*) s
         close(20)
 
     end subroutine
