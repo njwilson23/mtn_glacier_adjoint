@@ -10,7 +10,7 @@ toolchain: kees_model.f90
 	openad -c -m f $<
 
 # Compile the tangent linear model
-tlm_model: w2f__types.o OAD_active.o kees_model.pre.xb.x2w.w2f.post.o tlm_driver.o
+tlm_model: w2f__types.o OAD_active.o kees_model.pre.xb.x2w.w2f.post.o tlm_model.o
 	$(fort) $^ -o tlm_model
 
 %.o: %.f90
