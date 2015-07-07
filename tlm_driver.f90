@@ -1,8 +1,9 @@
 program driver
 
-    !use OAD_active
-    use OAD_intrinsics
+    use OAD_active
     implicit none
+
+    external integrate_model
 
     integer, parameter      :: f64 = kind(8), i32 = kind(4)
     real(f64), parameter    :: g = 9.8, A = 1e-16, rho = 920.0
@@ -20,18 +21,6 @@ program driver
     real(f64), dimension(len)   :: s    ! surface elevation
     type(active), dimension(len):: mb
     type(active)                :: volume
-
-    !external forward_model
-    !interface
-    !    real(4) function forward_model(x, b, s, mb, dt, end_time)
-    !        integer, parameter       :: f64 = kind(8), i32 = kind(4)
-    !        real(f64), dimension(:), intent(in)     :: x    ! horizontal coordinate
-    !        real(f64), dimension(:), intent(in)     :: b    ! base elevation
-    !        real(f64), dimension(:), intent(inout)  :: s    ! surface elevation
-    !        type(active), dimension(:), intent(in)     :: mb
-    !        real(f64), intent(in)   :: dt, end_time
-    !    end function
-    !end interface
 
     do i = 1, len
         x(i) = (i-1)*dx

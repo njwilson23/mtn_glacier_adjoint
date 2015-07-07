@@ -28,6 +28,7 @@ program fwd_model
     !call writemodel("finl.dat", x, b, s)
 
     print*, "Glacier volume:",volume/1e6, "km^2"
+    print*, "       (should be 14.3877459     km^2)"
 
 end program
 
