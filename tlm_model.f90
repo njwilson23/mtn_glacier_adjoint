@@ -25,11 +25,14 @@ program driver
         mb(i)%d = 0.0
     end do
 
+    open(unit=20, file="grad_tlm.dat", form="formatted", status="replace")
     do i = 1, len
         mb(i)%d = 1.0
         call integrate_model(x, b, s, mb, volume, dt, end_time)
         mb(i)%d = 0.0
         print*, i, volume%d
+        write(20,*) i, volume%d
     end do
+    close(20)
 
 end program

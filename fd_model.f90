@@ -43,9 +43,12 @@ program brute_force
 
     end do
 
+    open(unit=20, file="grad_fd.dat", form="formatted", status="replace")
     do i = 1,len
         gradient(i) = (volume(2*(i-1)+2) - volume(2*(i-1)+1)) / (2*delta_mb)
         print*, i, gradient(i)
+        write(20,*) i, gradient(i)
     end do
+    close(20)
 
 end program
