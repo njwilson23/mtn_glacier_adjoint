@@ -1,16 +1,8 @@
 program driver
 
     use OAD_active
+    use kees_model
     implicit none
-
-    external integrate_model
-
-    integer, parameter      :: f64 = kind(8), i32 = kind(4)
-    real(f64), parameter    :: g = 9.8, A = 1e-16, rho = 920.0
-    integer(i32), parameter :: n = 3
-    real(f64), parameter    :: C = (2*A / (n+2)) * (rho*g)**n
-
-    integer(i32)            :: i
 
     ! Run workshop example
     integer(i32), parameter :: len = 50
@@ -21,6 +13,8 @@ program driver
     !real(f64), dimension(len)   :: s    ! surface elevation
     type(active), dimension(len):: s, mb
     type(active)                :: volume
+
+    integer(i32)            :: i
 
     do i = 1, len
         x(i) = (i-1)*dx
