@@ -1,7 +1,7 @@
 program driver
 
-    use OAD_active
-
+    !use OAD_active
+    use OAD_intrinsics
     implicit none
 
     integer, parameter      :: f64 = kind(8), i32 = kind(4)
@@ -21,7 +21,7 @@ program driver
     type(active), dimension(len):: mb
     type(active)                :: volume
 
-    external forward_model
+    !external forward_model
     !interface
     !    real(4) function forward_model(x, b, s, mb, dt, end_time)
     !        integer, parameter       :: f64 = kind(8), i32 = kind(4)
@@ -41,7 +41,7 @@ program driver
         mb(i)%d = 1.0
     end do
 
-    volume = forward_model(x, b, s, mb, dt, end_time)
+    call integrate_model(x, b, s, mb, volume, dt, end_time)
     print*, "Glacier volume:", volume%v/1e6, "km^2"
     print*, "Glacier volume derivative (mass balance)", volume%d/1e6, "km^2 per m/yr"
 

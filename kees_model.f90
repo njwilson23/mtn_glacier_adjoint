@@ -1,48 +1,17 @@
 !   Forward model for the Kees example at
 !       http://websrv.cs.umt.edu/isis/index.php/Kees%27_assignment
 !
-program kees_forward
 
-    implicit none
+module kees_model
 
     integer,parameter       :: f64 = kind(8), i32 = kind(4)
     real(f64), parameter    :: g = 9.8, A = 1e-16, rho = 920.0
     integer(i32), parameter :: n = 3
     real(f64), parameter    :: C = (2*A / (n+2)) * (rho*g)**n
-    integer(i32)            :: i
-    real(f64)               :: volume
-
-    ! Run workshop example
-    integer(i32), parameter :: len = 50
-    real(f64), parameter    :: dx = 1000.0, dt = 0.05, end_time = 1000.0
-
-    real(f64), dimension(len)   :: mb
-    real(f64), dimension(len)   :: x    ! horizontal coordinate
-    real(f64), dimension(len)   :: b    ! base elevation
-    real(f64), dimension(len)   :: s    ! surface elevation
-
-    do i = 1,len
-        x(i) = (i-1)*dx
-        b(i) = -2.5e-2 * x(i)
-        s(i) = b(i)
-        mb(i) = 4.0 - 0.2e-3 * x(i)
-    end do
-    !call writemodel("init.dat", x, b, s)
-
-    !$openad INDEPENDENT(mb)
-
-    volume = forward_model(x, b, s, mb, dt, end_time)
-    print*, "Glacier volume:",volume/1e6, "km^2"
-
-    !$openad DEPENDENT(volume)
-
-    !call writemodel("finl.dat", x, b, s)
-
-    ! --------------------------------------------------------------- !
 
 contains
 
-    real(f64) function forward_model(x, b, s, mb, dt, end_time) result(volume)
+    subroutine integrate_model(x, b, s, mb, volume, dt, end_time)
 
         implicit none
 
@@ -50,8 +19,11 @@ contains
         real(f64), dimension(:), intent(in)     :: x    ! horizontal coordinate
         real(f64), dimension(:), intent(in)     :: b    ! base elevation
         real(f64), dimension(:), intent(inout)  :: s    ! surface elevation
+        real(f64), intent(inout)                :: volume
         real(f64), intent(in)   :: dt, end_time
         real(f64)               :: time
+
+        !$openad INDEPENDENT(mb)
 
         time = 0.0
 
@@ -62,7 +34,9 @@ contains
 
         volume = glacier_volume(x, b, s)
 
-    end function
+        !$openad DEPENDENT(volume)
+
+    end subroutine
 
     ! Compute diffusivity for a model instance for a particular glen
     ! exponent
@@ -146,5 +120,4 @@ contains
 
     end subroutine
 
-end program
-
+end module
