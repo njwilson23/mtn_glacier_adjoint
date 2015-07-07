@@ -11,6 +11,7 @@ module kees_model
 
 contains
 
+    ! WARNING: modifies s IN-PLACE
     subroutine integrate_model(x, b, s, mb, volume, dt, end_time)
 
         implicit none

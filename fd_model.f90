@@ -10,11 +10,11 @@ program brute_force
     real(f64), dimension(len)   :: x    ! horizontal coordinate
     real(f64), dimension(len)   :: b    ! base elevation
     real(f64), dimension(len)   :: s    ! surface elevation
-    real(f64), dimension(2*len) :: volume
-    real(f64), dimension(len)   :: gradient
+    real(f64), dimension(len)   :: volume, gradient
+    real(f64)                   :: reference_volume
 
     real(f64), parameter        :: delta_mb = 0.01
-    integer(i32)                :: i, j, perturbed_idx
+    integer(i32)                :: i, j
 
     do i = 1,len
         x(i) = (i-1)*dx
@@ -23,29 +23,23 @@ program brute_force
         mb(i) = 4.0 - 0.2e-3 * x(i)
     end do
 
-    do j = 1, 2*len
+    call integrate_model(x, b, s, mb, reference_volume, dt, end_time)
 
-        if (mod(j, 2) .eq. 1) then      ! odd
-            perturbed_idx = (j-1)/2 + 1
-            mb(perturbed_idx) = mb(perturbed_idx) - delta_mb
-        else                            ! even
-            perturbed_idx = j/2
-            mb(perturbed_idx) = mb(perturbed_idx) + delta_mb
-        endif
+    do i = 1, len
 
-        call integrate_model(x, b, s, mb, volume(j), dt, end_time)
+        do j = 1,len
+            s(j) = b(j)
+        end do
 
-        if (mod(j, 2) .eq. 1) then      ! odd
-            mb(perturbed_idx) = mb(perturbed_idx) + delta_mb
-        else                            ! even
-            mb(perturbed_idx) = mb(perturbed_idx) - delta_mb
-        endif
+        mb(i) = mb(i) + delta_mb
+        call integrate_model(x, b, s, mb, volume(i), dt, end_time)
+        mb(i) = mb(i) - delta_mb
 
     end do
 
     open(unit=20, file="grad_fd.dat", form="formatted", status="replace")
     do i = 1,len
-        gradient(i) = (volume(2*(i-1)+2) - volume(2*(i-1)+1)) / (2*delta_mb)
+        gradient(i) = (volume(i) - reference_volume) / delta_mb
         print*, i, gradient(i)
         write(20,*) i, gradient(i)
     end do
