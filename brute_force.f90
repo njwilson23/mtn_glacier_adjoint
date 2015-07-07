@@ -13,7 +13,7 @@ program brute_force
     real(f64), dimension(2*len) :: volume
     real(f64), dimension(len)   :: gradient
 
-    real(f64), parameter        :: delta_mb = 0.1
+    real(f64), parameter        :: delta_mb = 0.01
     integer(i32)                :: i, j, perturbed_idx
 
     do i = 1,len
@@ -33,7 +33,6 @@ program brute_force
             mb(perturbed_idx) = mb(perturbed_idx) + delta_mb
         endif
 
-        print*,"filling ",j,"by modifying", perturbed_idx
         call integrate_model(x, b, s, mb, volume(j), dt, end_time)
 
         if (mod(j, 2) .eq. 1) then      ! odd

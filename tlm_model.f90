@@ -20,13 +20,16 @@ program driver
         x(i) = (i-1)*dx
         b(i) = -2.5e-2 * x(i)
         s(i)%v = b(i)
-        s(i)%d = 1.0
+        s(i)%d = 0.0
         mb(i)%v = 4.0 - 0.2e-3 * x(i)
-        mb(i)%d = 1.0
+        mb(i)%d = 0.0
     end do
 
-    call integrate_model(x, b, s, mb, volume, dt, end_time)
-    print*, "Glacier volume:", volume%v/1e6, "km^2"
-    print*, "Glacier volume derivative (mass balance)", volume%d/1e6, "km^2 per m/yr"
+    do i = 1, len
+        mb(i)%d = 1.0
+        call integrate_model(x, b, s, mb, volume, dt, end_time)
+        mb(i)%d = 0.0
+        print*, i, volume%d
+    end do
 
 end program
