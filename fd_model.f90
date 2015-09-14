@@ -13,7 +13,7 @@ program brute_force
     real(f64), dimension(len)   :: volume, gradient
     real(f64)                   :: reference_volume
 
-    real(f64), parameter        :: delta_mb = 0.01
+    real(f64), parameter        :: delta_mb = 1e-2
     integer(i32)                :: i, j
 
     do i = 1,len
