@@ -1,6 +1,6 @@
 fort=gfortran
 flags=-ffree-form -pedantic -Wall
-reverse_obj = OAD_tape.o OAD_rev.o OAD_cp.o
+reverse_obj = OAD_tape.o OAD_rev.o OAD_active.o OAD_cp.o
 
 # Compile the forward model
 fwd_model: kees_model.f90 fwd_model.f90
@@ -15,7 +15,7 @@ ad_forward: w2f__types.o OAD_active.o kees_model.pre.xb.x2w.w2f.post.o ad_fwd_mo
 	$(fort) $^ -o ad_fwd_model
 
 # Compile the tangent linear model using reverse mode
-ad_reverse: w2f__types.o $(reverse_obj) OAD_active.o kees_model.pre.xb.x2w.w2f.post.o ad_rev_model.o
+ad_reverse: w2f__types.o $(reverse_obj) kees_model.pre.xb.x2w.w2f.post.o ad_rev_model.o
 	$(fort) $^ -o ad_rev_model
 
 # Run the automatic openad script (forward mode)
@@ -34,7 +34,10 @@ ad_rj: kees_model.f90
 	$(fort) -c $< -o $@
 
 clean:
-	rm fwd_model *.o *.log~ *.B *.xaif *mod-whirl
+	rm *.o *.log~ *mod-whirl kees_model.pre* w2f__types* OAD_* oad_* iaddr.c
+	rm ad_inline.f ad_f.f90 ad_template.f
+	rm fwd_model
+	rm ad_fwd_model
 
-.PHONY: clean toolchain ad_f ad_rj 
+.PHONY: clean ad_f ad_rj 
 
