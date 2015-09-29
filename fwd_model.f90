@@ -5,18 +5,22 @@ program fwd_model
     use kees_model
     implicit none
 
-    integer(i32), parameter :: len = 50
-    real(f64), parameter    :: dx = 1000.0, dt = 0.05, end_time = 1000.0
+    integer, parameter :: sz = 50
+    double precision, parameter     :: dx = 1000.0
+    double precision                :: dt, end_time
 
-    real(f64), dimension(len)   :: mb
-    real(f64), dimension(len)   :: x    ! horizontal coordinate
-    real(f64), dimension(len)   :: b    ! base elevation
-    real(f64), dimension(len)   :: s    ! surface elevation
-    real(f64)                   :: volume
+    double precision, dimension(sz) :: mb
+    double precision, dimension(sz) :: x    ! horizontal coordinate
+    double precision, dimension(sz) :: b    ! base elevation
+    double precision, dimension(sz) :: s    ! surface elevation
+    double precision                :: volume
 
-    integer(i32)            :: i
+    integer            :: i
 
-    do i = 1,len
+    dt = 0.05
+    end_time = 1000.0
+
+    do i = 1,sz
         x(i) = (i-1)*dx
         b(i) = -2.5e-2 * x(i)
         s(i) = b(i)
@@ -24,7 +28,7 @@ program fwd_model
     end do
 
     !call writemodel("init.dat", x, b, s)
-    call integrate_model(x, b, s, mb, volume, dt, end_time)
+    call integrate_model(sz, x, b, s, mb, volume, dt, end_time)
     !call writemodel("finl.dat", x, b, s)
 
     print*, "Glacier volume:",volume/1e6, "km^2"
