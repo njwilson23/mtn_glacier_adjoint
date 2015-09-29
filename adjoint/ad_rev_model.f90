@@ -36,7 +36,7 @@ program driver
     call integrate_model(sz_, x, b, s, mb, volume, dt, end_time)
 
     do i = 1, sz
-        print*, mb(i)
+        print*, mb(i)%d
     end do
 
 end program
